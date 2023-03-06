@@ -10,6 +10,6 @@ import { socketVideoextends } from './socket/socket.video';
     ChatModule,
   ],
   controllers: [],
-  providers: [socketGateway, socketVideoextends],
+  providers: [socketGateway],
 })
 export class AppModule {}

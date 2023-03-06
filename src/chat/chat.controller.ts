@@ -10,7 +10,6 @@ export class ChatController {
     if (idUser.trim() === '') {
       return new NotAcceptableException();
     }
-    console.log('Buscando chat');
     return this.chatService.getChatsByIdUser(idUser);
   }
 }

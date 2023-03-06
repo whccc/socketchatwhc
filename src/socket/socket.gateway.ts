@@ -5,9 +5,12 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
+import { time } from 'console';
 import { Server, Socket } from 'socket.io';
 import { ChatService } from 'src/chat/chat.service';
 import {
+  IAnswerCall,
+  ICallVideo,
   IChatWriting,
   IDataChatCreate,
 } from 'src/chat/interfaces/IChat.interface';
@@ -24,7 +27,7 @@ export class socketGateway {
   }
   @WebSocketServer() server: Socket;
 
-  @SubscribeMessage('message')
+  @SubscribeMessage('messageChat')
   public handleMessage(
     @MessageBody() dataMessage: IDataMessage,
     @ConnectedSocket() client: Socket,
@@ -77,6 +80,47 @@ export class socketGateway {
     this.removeUserConnect(client);
   }
 
+  @SubscribeMessage('callUser')
+  public onCallUser(@MessageBody() dataChat: ICallVideo) {
+    console.log('llamandooo');
+    const user = this.getAllSocketsByIdUser(dataChat.to);
+    if (!user) {
+      return;
+    }
+    for (const socket of user?.sockets) {
+      socket.emit('callUser', {
+        signal: dataChat.signalData,
+        from: dataChat.from,
+        name: dataChat.userName,
+      });
+    }
+  }
+
+  @SubscribeMessage('answerCall')
+  public onAnswerCall(@MessageBody() dataChat: IAnswerCall) {
+    console.log('lll');
+    const user = this.getAllSocketsByIdUser(dataChat.to);
+    if (!user) {
+      return;
+    }
+    for (const socket of user?.sockets) {
+      socket.emit('callAccepted', dataChat.signal);
+    }
+  }
+
+  @SubscribeMessage('endCall')
+  public enCall(@MessageBody() idUser: string): void {
+    const user = this.getAllSocketsByIdUser(idUser);
+    console.log('user socket', user);
+    if (!user) {
+      return;
+    }
+    for (const socket of user.sockets) {
+      socket.emit('endCall', 'Usuario finalizó llamada');
+    }
+    console.log(idUser, 'finalizo llamda');
+  }
+
   public addUserConnect(socket: Socket): void {
     const { idUser } = socket.handshake.query as { idUser: string };
     const userFound = this.arraySesionUsers.find((u) => u.idUser === idUser);
@@ -96,6 +140,11 @@ export class socketGateway {
     const userFound = this.arraySesionUsers.find((u) => u.idUser === idUser);
     if (userFound) {
       userFound.sockets = userFound.sockets.filter((u) => u.id !== socket.id);
+    }
+    if (!userFound.sockets.length) {
+      this.arraySesionUsers = this.arraySesionUsers.filter(
+        (d) => d.idUser !== userFound.idUser,
+      );
     }
 
     console.log(this.arraySesionUsers, 'me fui');

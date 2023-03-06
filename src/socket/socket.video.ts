@@ -7,15 +7,16 @@ import { Socket } from 'socket.io/dist/socket';
 import { IAnswerCall, ICallVideo } from 'src/chat/interfaces/IChat.interface';
 import { socketGateway } from './socket.gateway';
 
+@WebSocketGateway()
 export class socketVideoextends extends socketGateway {
   @SubscribeMessage('callUser')
   public onCallUser(@MessageBody() dataChat: ICallVideo) {
+    console.log('llamandooo');
     const user = this.getAllSocketsByIdUser(dataChat.to);
     if (!user) {
       return;
     }
     for (const socket of user?.sockets) {
-      console.log(dataChat);
       socket.emit('callUser', {
         signal: dataChat.signalData,
         from: dataChat.from,
@@ -26,11 +27,11 @@ export class socketVideoextends extends socketGateway {
 
   @SubscribeMessage('answerCall')
   public onAnswerCall(@MessageBody() dataChat: IAnswerCall) {
+    console.log('lll');
     const user = this.getAllSocketsByIdUser(dataChat.to);
     if (!user) {
       return;
     }
-    console.log(dataChat.signal);
     for (const socket of user?.sockets) {
       socket.emit('callAccepted', dataChat.signal);
     }
